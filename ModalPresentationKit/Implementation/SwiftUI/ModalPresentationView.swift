@@ -15,6 +15,7 @@ struct ModalPresentationView<Content: View>: UIViewControllerRepresentable {
     
     let isPresented: Binding<Bool>
     let height: CGFloat
+    let animatedHeightChanges: Bool
     let appearance: Appearance
     let content: () -> Content
     
@@ -31,6 +32,7 @@ struct ModalPresentationView<Content: View>: UIViewControllerRepresentable {
             onDismiss: { isPresented.wrappedValue = false },
             isModalPresented: isPresented.wrappedValue,
             height: height,
+            animatedHeightChanges: animatedHeightChanges,
             appearance: appearance
         )
     }

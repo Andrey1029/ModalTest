@@ -8,17 +8,17 @@
 import UIKit
 
 public final class ModalTransitioningDelegate: NSObject, UIViewControllerTransitioningDelegate {
-    private let height: ModalHeight
+    private let observableHeight: ObservableModalHeight
     private let appearance: Appearance
     
-    public init(height: ModalHeight, appearance: Appearance = .init()) {
-        self.height = height
+    public init(observableHeight: ObservableModalHeight, appearance: Appearance = .init()) {
+        self.observableHeight = observableHeight
         self.appearance = appearance
         super.init()
     }
     
     public convenience init(height: CGFloat = .infinity, appearance: Appearance = .init()) {
-        self.init(height: .init(value: height), appearance: appearance)
+        self.init(observableHeight: .init(value: height), appearance: appearance)
     }
     
     public func presentationController(
@@ -29,7 +29,7 @@ public final class ModalTransitioningDelegate: NSObject, UIViewControllerTransit
         ModalPresentationController(
             presentedViewController: presented,
             presentingViewController: presenting,
-            height: height,
+            observableHeight: observableHeight,
             appearance: appearance
         )
     }

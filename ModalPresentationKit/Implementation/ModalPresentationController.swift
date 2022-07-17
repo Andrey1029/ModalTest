@@ -8,7 +8,7 @@
 import UIKit
 
 final class ModalPresentationController: UIPresentationController {
-    private let height: ModalHeight
+    private let observableHeight: ObservableModalHeight
     private let appearance: Appearance
     private var unnecessaryTranslation: CGFloat = .zero
     private let activeScrollViewsStorage = ActiveScrollViewsStorage()
@@ -33,14 +33,14 @@ final class ModalPresentationController: UIPresentationController {
     init(
         presentedViewController: UIViewController,
         presentingViewController: UIViewController?,
-        height: ModalHeight,
+        observableHeight: ObservableModalHeight,
         appearance: Appearance
     ) {
-        self.height = height
+        self.observableHeight = observableHeight
         self.appearance = appearance
         super.init(presentedViewController: presentedViewController, presenting: presentingViewController)
         
-        height.delegate = self
+        observableHeight.delegate = self
         presentedViewController.view.addGestureRecognizer(panGestureRecognizer)
         presentedViewController.view.roundCorners(
             [.layerMinXMinYCorner, .layerMaxXMinYCorner],
@@ -103,9 +103,9 @@ extension ModalPresentationController: UIGestureRecognizerDelegate {
     }
 }
 
-extension ModalPresentationController: ModalHeightDelegate {
-    func heightChanged() {
-        updateState(context: .common, animated: true)
+extension ModalPresentationController: ObservableModalHeightDelegate {
+    func heightChanged(animated: Bool) {
+        updateState(context: .common, animated: animated)
     }
 }
 
@@ -215,7 +215,7 @@ private extension ModalPresentationController {
                 )
             } ?? .zero,
             translation: translation,
-            normalHeight: height.value,
+            normalHeight: observableHeight.value,
             velocity: velocity,
             scrollOffsets: scrollOffsets,
             unnecessaryTranslation: unnecessaryTranslation,

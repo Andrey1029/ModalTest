@@ -21,7 +21,7 @@
 		551CE6022882099000FED918 /* CommonTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551CE5EC2881F75C00FED918 /* CommonTools.swift */; };
 		551CE60628820BCB00FED918 /* ModalPresentation+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551CE60528820BCB00FED918 /* ModalPresentation+SwiftUI.swift */; };
 		551CE608288216F500FED918 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 551CE607288216F400FED918 /* LaunchScreen.storyboard */; };
-		5532B44528829EE300CD65CE /* ModalHeight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5532B44428829EE200CD65CE /* ModalHeight.swift */; };
+		5532B44528829EE300CD65CE /* ObservableModalHeight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5532B44428829EE200CD65CE /* ObservableModalHeight.swift */; };
 		5532B4472882A63800CD65CE /* Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5532B4462882A63800CD65CE /* Appearance.swift */; };
 		55F867BF2883006800FBF2AF /* ModalContentWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F867BE2883006800FBF2AF /* ModalContentWrapper.swift */; };
 		55F867C12883007D00FBF2AF /* ModalPresentationControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F867C02883007D00FBF2AF /* ModalPresentationControllerWrapper.swift */; };
@@ -69,7 +69,7 @@
 		551CE5F52882098800FED918 /* ModalPresentationKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ModalPresentationKit.h; sourceTree = "<group>"; };
 		551CE60528820BCB00FED918 /* ModalPresentation+SwiftUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModalPresentation+SwiftUI.swift"; sourceTree = "<group>"; };
 		551CE607288216F400FED918 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		5532B44428829EE200CD65CE /* ModalHeight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalHeight.swift; sourceTree = "<group>"; };
+		5532B44428829EE200CD65CE /* ObservableModalHeight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservableModalHeight.swift; sourceTree = "<group>"; };
 		5532B4462882A63800CD65CE /* Appearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Appearance.swift; sourceTree = "<group>"; };
 		55F867BE2883006800FBF2AF /* ModalContentWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalContentWrapper.swift; sourceTree = "<group>"; };
 		55F867C02883007D00FBF2AF /* ModalPresentationControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalPresentationControllerWrapper.swift; sourceTree = "<group>"; };
@@ -148,7 +148,7 @@
 		55F867BB2882FF8900FBF2AF /* Interface */ = {
 			isa = PBXGroup;
 			children = (
-				5532B44428829EE200CD65CE /* ModalHeight.swift */,
+				5532B44428829EE200CD65CE /* ObservableModalHeight.swift */,
 				551CE5E62881F3F000FED918 /* UIViewController+Extension.swift */,
 				551CE5E82881F47000FED918 /* ModalTransitioningDelegate.swift */,
 				551CE60528820BCB00FED918 /* ModalPresentation+SwiftUI.swift */,
@@ -303,7 +303,7 @@
 			files = (
 				551CE5FE2882099000FED918 /* UIViewController+Extension.swift in Sources */,
 				551CE60628820BCB00FED918 /* ModalPresentation+SwiftUI.swift in Sources */,
-				5532B44528829EE300CD65CE /* ModalHeight.swift in Sources */,
+				5532B44528829EE300CD65CE /* ObservableModalHeight.swift in Sources */,
 				5532B4472882A63800CD65CE /* Appearance.swift in Sources */,
 				551CE6022882099000FED918 /* CommonTools.swift in Sources */,
 				55F867C12883007D00FBF2AF /* ModalPresentationControllerWrapper.swift in Sources */,

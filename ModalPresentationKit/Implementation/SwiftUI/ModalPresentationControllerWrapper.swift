@@ -16,15 +16,20 @@ final class ModalPresentationControllerWrapper<Content: View>: UIViewController 
         let onDismiss: () -> Void
         let isModalPresented: Bool
         let height: CGFloat
+        let animatedHeightChanges: Bool
         let appearance: Appearance
     }
     
-    private lazy var height = ModalHeight(value: .zero)
+    private lazy var observableHeight = ObservableModalHeight(value: .zero)
     
     var model: Model? {
         didSet {
             guard let model = model else { return }
-            height.value = model.height
+            
+            observableHeight.update(
+                newValue: model.height,
+                animated: model.animatedHeightChanges
+            )
             
             guard oldValue?.isModalPresented != model.isModalPresented else { return }
             
@@ -38,7 +43,7 @@ final class ModalPresentationControllerWrapper<Content: View>: UIViewController 
                     content: model.content(),
                     onDismiss: model.onDismiss
                 ),
-                height: height,
+                observableHeight: observableHeight,
                 animated: true,
                 appearance: model.appearance,
                 completion: nil

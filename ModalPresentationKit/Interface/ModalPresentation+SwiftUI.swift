@@ -14,12 +14,14 @@ public extension View {
     func modalView<Content: View>(
         isPresented: Binding<Bool>,
         height: CGFloat = .infinity,
+        animatedHeightChanges: Bool = true,
         appearance: Appearance = .init(),
         content: @escaping () -> Content
     ) -> some View {
         let view = ModalPresentationView(
             isPresented: isPresented,
             height: height,
+            animatedHeightChanges: animatedHeightChanges,
             appearance: appearance,
             content: content
         ).disabled(true)

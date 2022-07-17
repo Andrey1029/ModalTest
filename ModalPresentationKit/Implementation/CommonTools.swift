@@ -33,3 +33,13 @@ extension UIScrollView {
         }.contains(true)
     }
 }
+
+extension DispatchQueue {
+    static func onMainAsync(_ action: @escaping () -> Void) {
+        if Thread.isMainThread {
+            action()
+        } else {
+            DispatchQueue.main.async(execute: action)
+        }
+    }
+}

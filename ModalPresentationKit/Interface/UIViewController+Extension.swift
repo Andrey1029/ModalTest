@@ -10,12 +10,15 @@ import UIKit
 public extension UIViewController {
     func presentModal(
         vc: UIViewController,
-        height: ModalHeight,
+        observableHeight: ObservableModalHeight,
         animated: Bool = true,
         appearance: Appearance = .init(),
         completion: (() -> Void)? = nil
     ) {
-        let delegate = ModalTransitioningDelegate(height: height, appearance: appearance)
+        let delegate = ModalTransitioningDelegate(
+            observableHeight: observableHeight,
+            appearance: appearance
+        )
         vc.modalPresentationStyle = .custom
         vc.transitioningDelegate = delegate
         present(vc, animated: animated, completion: completion)
@@ -30,7 +33,7 @@ public extension UIViewController {
     ) {
         presentModal(
             vc: vc,
-            height: .init(value: height),
+            observableHeight: .init(value: height),
             animated: animated,
             appearance: appearance,
             completion: completion
