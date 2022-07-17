@@ -19,7 +19,7 @@ struct State: Equatable {
         let translation: CGFloat
         let normalHeight: CGFloat
         let velocity: CGFloat
-        let scrollOffsets: [CGFloat]
+        let scrollOffsets: [Int: CGFloat]
         let unnecessaryTranslation: CGFloat
         let context: Context
     }
@@ -28,16 +28,19 @@ struct State: Equatable {
     let backgroundAlpha: CGFloat
     let animated: Bool
     let unnecessaryTranslation: CGFloat
-    let resetMinScrollOffset: Bool
+    let scrollOffsetsChanges: [Int: CGFloat]
     
     static func makeState(input: Input) -> Self? {
         let normalHeight = min(input.bounds.height, input.normalHeight)
+        let finalTranslation = input.translation - input.unnecessaryTranslation
+        var scrollOffsetsChanges = [Int: CGFloat]()
         
         guard
             normalHeight != .zero,
             canDrag(
-                translation: input.translation - input.unnecessaryTranslation,
-                scrollOffsets: input.scrollOffsets
+                translation: finalTranslation,
+                scrollOffsets: input.scrollOffsets,
+                scrollOffsetsChanges: &scrollOffsetsChanges
             )
         else {
             return makeDefaultState(
@@ -46,12 +49,10 @@ struct State: Equatable {
                 unnecessaryTranslation: input.context == .draggingFinish
                     ? .zero
                     : input.translation,
-                resetMinScrollOffset: false,
-                animated: false
+                animated: false,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
         }
-        
-        let finalTranslation = input.translation - input.unnecessaryTranslation
         
         switch input.context {
         case .common:
@@ -60,14 +61,16 @@ struct State: Equatable {
                 bounds: input.bounds,
                 translation: finalTranslation,
                 normalHeight: normalHeight,
-                unnecessaryTranslation: input.unnecessaryTranslation
+                unnecessaryTranslation: input.unnecessaryTranslation,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
         case .draggingFinish:
             return makeDraggingFinishState(
                 bounds: input.bounds,
                 translation: finalTranslation,
                 velocity: input.velocity,
-                normalHeight: normalHeight
+                normalHeight: normalHeight,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
         case .normalHeightChange:
             return makeCommonState(
@@ -75,7 +78,8 @@ struct State: Equatable {
                 bounds: input.bounds,
                 translation: finalTranslation,
                 normalHeight: normalHeight,
-                unnecessaryTranslation: input.unnecessaryTranslation
+                unnecessaryTranslation: input.unnecessaryTranslation,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
         }
     }
@@ -84,10 +88,19 @@ struct State: Equatable {
 private extension State {
     static func canDrag(
         translation: CGFloat,
-        scrollOffsets: [CGFloat]
+        scrollOffsets: [Int: CGFloat],
+        scrollOffsetsChanges: inout [Int: CGFloat]
     ) -> Bool {
-        guard let minScrollOffset = scrollOffsets.min() else { return true }
-        return minScrollOffset <= translation
+        guard let minScrollOffset = scrollOffsets.min(by: { $0.value < $1.value })
+        else { return true }
+        
+        let canDrag = minScrollOffset.value <= translation
+
+        if canDrag {
+            scrollOffsetsChanges[minScrollOffset.key] = .zero
+        }
+        
+        return canDrag
     }
     
     static func makeCommonState(
@@ -95,15 +108,16 @@ private extension State {
         bounds: CGRect,
         translation: CGFloat,
         normalHeight: CGFloat,
-        unnecessaryTranslation: CGFloat
+        unnecessaryTranslation: CGFloat,
+        scrollOffsetsChanges: [Int: CGFloat]
     ) -> Self {
         translation < 0
             ? makeDefaultState(
                 bounds: bounds,
                 normalHeight: normalHeight,
                 unnecessaryTranslation: unnecessaryTranslation,
-                resetMinScrollOffset: true,
-                animated: animated
+                animated: animated,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
             : .init(
                 bounds: bounds,
@@ -111,8 +125,8 @@ private extension State {
                 additionalTopInset: translation,
                 additionalHeight: .zero,
                 unnecessaryTranslation: unnecessaryTranslation,
-                resetMinScrollOffset: true,
-                animated: animated
+                animated: animated,
+                scrollOffsetsChanges: scrollOffsetsChanges
             )
     }
     
@@ -120,7 +134,8 @@ private extension State {
         bounds: CGRect,
         translation: CGFloat,
         velocity: CGFloat,
-        normalHeight: CGFloat
+        normalHeight: CGFloat,
+        scrollOffsetsChanges: [Int: CGFloat]
     ) -> Self? {
         let dismissOffset = normalHeight * dismissOffsetCoefficient
         guard translation < dismissOffset && velocity < minVelocityForClosing else { return nil }
@@ -128,8 +143,8 @@ private extension State {
             bounds: bounds,
             normalHeight: normalHeight,
             unnecessaryTranslation: .zero,
-            resetMinScrollOffset: true,
-            animated: true
+            animated: true,
+            scrollOffsetsChanges: scrollOffsetsChanges
         )
     }
     
@@ -137,8 +152,8 @@ private extension State {
         bounds: CGRect,
         normalHeight: CGFloat,
         unnecessaryTranslation: CGFloat,
-        resetMinScrollOffset: Bool,
-        animated: Bool
+        animated: Bool,
+        scrollOffsetsChanges: [Int: CGFloat]
     ) -> Self {
         .init(
             bounds: bounds,
@@ -146,8 +161,8 @@ private extension State {
             additionalTopInset: .zero,
             additionalHeight: .zero,
             unnecessaryTranslation: unnecessaryTranslation,
-            resetMinScrollOffset: resetMinScrollOffset,
-            animated: animated
+            animated: animated,
+            scrollOffsetsChanges: scrollOffsetsChanges
         )
     }
     
@@ -157,10 +172,10 @@ private extension State {
         additionalTopInset: CGFloat,
         additionalHeight: CGFloat,
         unnecessaryTranslation: CGFloat,
-        resetMinScrollOffset: Bool,
-        animated: Bool
+        animated: Bool,
+        scrollOffsetsChanges: [Int: CGFloat]
     ) {
-        self.resetMinScrollOffset = resetMinScrollOffset
+        self.scrollOffsetsChanges = scrollOffsetsChanges
         self.unnecessaryTranslation = unnecessaryTranslation
         self.animated = animated
         self.backgroundAlpha = additionalTopInset > 0

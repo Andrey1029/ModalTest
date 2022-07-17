@@ -23,7 +23,10 @@ final class ModalPresentationController: UIPresentationController {
     
     private var state: State? {
         didSet {
-            guard oldValue != state else { return }
+            guard
+                oldValue != state || !(state?.scrollOffsetsChanges.isEmpty ?? true)
+            else { return }
+            
             stateUpdated()
         }
     }
@@ -179,20 +182,10 @@ private extension ModalPresentationController {
     }
     
     func updateScrollViewsOffsets(state: State) {
-        activeScrollViewsStorage.scrollViews.forEach {
-            if $0.contentOffset.y < 0 {
-                $0.contentOffset.y = 0
-            }
-        }
-        
-        guard
-            state.resetMinScrollOffset,
-            let minOffset = activeScrollViewsStorage.scrollViews.map({ $0.contentOffset.y }).min()
-        else { return }
-        
-        activeScrollViewsStorage.scrollViews.forEach {
-            guard $0.contentOffset.y <= minOffset else { return }
-            $0.contentOffset.y = .zero
+        state.scrollOffsetsChanges.forEach { item in
+            let scrollView = activeScrollViewsStorage
+                .scrollViews.first { $0.hashValue == item.key }
+            scrollView?.contentOffset.y = item.value
         }
     }
     
@@ -209,7 +202,11 @@ private extension ModalPresentationController {
             translation: translation,
             normalHeight: height.value,
             velocity: velocity,
-            scrollOffsets: activeScrollViewsStorage.scrollViews.map { $0.contentOffset.y },
+            scrollOffsets: .init(
+                uniqueKeysWithValues: activeScrollViewsStorage.scrollViews.map {
+                    ($0.hashValue, $0.contentOffset.y)
+                }
+            ),
             unnecessaryTranslation: unnecessaryTranslation,
             context: context
         )
