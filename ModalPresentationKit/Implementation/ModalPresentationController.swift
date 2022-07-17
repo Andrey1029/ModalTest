@@ -14,13 +14,6 @@ final class ModalPresentationController: UIPresentationController {
     private var unnecessaryTranslation: CGFloat = .zero
     private let activeScrollViewsStorage = ActiveScrollViewsStorage()
     
-    private var stateInput: State.Input? {
-        didSet {
-            guard let stateInput = stateInput, oldValue != stateInput else { return }
-            state = State.makeState(input: stateInput)
-        }
-    }
-    
     private var state: State? {
         didSet {
             guard
@@ -68,7 +61,7 @@ final class ModalPresentationController: UIPresentationController {
     override func containerViewWillLayoutSubviews() {
         super.containerViewWillLayoutSubviews()
         backgroundView.frame = containerView?.bounds ?? .zero
-        stateInput = makeStateInput(context: .common)
+        updateState(context: .common)
     }
     
     override func presentationTransitionWillBegin() {
@@ -122,7 +115,7 @@ extension ModalPresentationController: UIGestureRecognizerDelegate {
 
 extension ModalPresentationController: ModalHeightDelegate {
     func heightChanged() {
-        stateInput = makeStateInput(context: .normalHeightChange)
+        updateState(context: .normalHeightChange)
     }
 }
 
@@ -138,9 +131,9 @@ private extension ModalPresentationController {
     @objc func didPan() {
         switch panGestureRecognizer.state {
         case .began, .changed, .possible:
-            stateInput = makeStateInput(context: .common)
+            updateState(context: .common)
         case .ended, .cancelled, .failed:
-            stateInput = makeStateInput(context: .draggingFinish)
+            updateState(context: .draggingFinish)
             panGestureRecognizer.setTranslation(.zero, in: containerView)
         @unknown default:
             break
@@ -151,6 +144,11 @@ private extension ModalPresentationController {
     
     @objc func closeWindow() {
         presentedViewController.dismiss(animated: true)
+    }
+    
+    func updateState(context: State.Input.Context) {
+        let input = makeStateInput(context: context)
+        state = State.makeState(input: input)
     }
     
     func stateUpdated() {
