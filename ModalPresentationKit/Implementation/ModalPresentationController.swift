@@ -12,7 +12,7 @@ final class ModalPresentationController: UIPresentationController {
     private let appearance: Appearance
     private var unnecessaryTranslation: CGFloat = .zero
     private let activeScrollViewsStorage = ActiveScrollViewsStorage()
-    private var isActive = false
+    private var animationsEnabled = false
     
     private lazy var backgroundView: UIView = {
         let view = UIView()
@@ -67,13 +67,12 @@ final class ModalPresentationController: UIPresentationController {
     
     override func presentationTransitionDidEnd(_ completed: Bool) {
         super.presentationTransitionDidEnd(completed)
-        isActive = true
+        animationsEnabled = true
     }
     
     override func dismissalTransitionWillBegin() {
         super.dismissalTransitionWillBegin()
-        isActive = false
-        
+
         guard let coordinator = presentingViewController.transitionCoordinator else { return }
         coordinator.animate { [weak backgroundView] _ in
             backgroundView?.alpha = 0
@@ -127,15 +126,13 @@ private extension ModalPresentationController {
         )
     }
     
-    func getCurrentState() -> State? {
-        isActive
-            ? .init(
-                frame: presentedView?.frame ?? .zero,
-                backgroundAlpha: backgroundView.alpha,
-                unnecessaryTranslation: unnecessaryTranslation,
-                scrollOffsets: scrollOffsets
-            )
-            : nil
+    func getCurrentState() -> State {
+        .init(
+            frame: presentedView?.frame ?? .zero,
+            backgroundAlpha: backgroundView.alpha,
+            unnecessaryTranslation: unnecessaryTranslation,
+            scrollOffsets: scrollOffsets
+        )
     }
     
     @objc func didPan() {
@@ -173,18 +170,18 @@ private extension ModalPresentationController {
         updateViews(newState: newState, oldState: oldState, animated: animated)
     }
     
-    func updateViews(newState: State, oldState: State?, animated: Bool) {
+    func updateViews(newState: State, oldState: State, animated: Bool) {
         let updateViews = { [weak self] in
             self?.presentedView?.frame = newState.frame
             self?.backgroundView.alpha = newState.backgroundAlpha
         }
         
         guard
-            newState.frame != oldState?.frame
-                || newState.backgroundAlpha != oldState?.backgroundAlpha
+            newState.frame != oldState.frame
+                || newState.backgroundAlpha != oldState.backgroundAlpha
         else { return }
         
-        guard animated, isActive else {
+        guard animated, animationsEnabled else {
             updateViews()
             return
         }
@@ -197,8 +194,8 @@ private extension ModalPresentationController {
         )
     }
     
-    func updateScrollViewsOffsets(newState: State, oldState: State?) {
-        guard newState.scrollOffsets != oldState?.scrollOffsets else { return }
+    func updateScrollViewsOffsets(newState: State, oldState: State) {
+        guard newState.scrollOffsets != oldState.scrollOffsets else { return }
         
         newState.scrollOffsets.forEach { item in
             let scrollView = activeScrollViewsStorage
