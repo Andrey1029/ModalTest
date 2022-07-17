@@ -179,8 +179,6 @@ private extension ModalPresentationController {
             self?.backgroundView.alpha = newState.backgroundAlpha
         }
         
-        print()
-        
         guard
             newState.frame != oldState?.frame
                 || newState.backgroundAlpha != oldState?.backgroundAlpha
