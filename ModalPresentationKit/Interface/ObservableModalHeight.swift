@@ -19,10 +19,7 @@ public final class ObservableModalHeight {
     public func update(newValue: CGFloat, animated: Bool) {
         guard newValue != value else { return }
         value = newValue
-        
-        DispatchQueue.onMainAsync { [weak delegate] in
-            delegate?.heightChanged(animated: animated)
-        }
+        delegate?.heightChanged(animated: animated)
     }
     
     public init(value: CGFloat) {
