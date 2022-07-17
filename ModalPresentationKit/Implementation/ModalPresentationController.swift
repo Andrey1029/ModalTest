@@ -10,19 +10,9 @@ import UIKit
 final class ModalPresentationController: UIPresentationController {
     private let height: ModalHeight
     private let appearance: Appearance
-    private var animationsEnabled = false
     private var unnecessaryTranslation: CGFloat = .zero
     private let activeScrollViewsStorage = ActiveScrollViewsStorage()
-    
-    private var state: State? {
-        didSet {
-            guard
-                oldValue != state || !(state?.scrollOffsetsChanges.isEmpty ?? true)
-            else { return }
-            
-            stateUpdated()
-        }
-    }
+    private var isActive = false
     
     private lazy var backgroundView: UIView = {
         let view = UIView()
@@ -61,7 +51,7 @@ final class ModalPresentationController: UIPresentationController {
     override func containerViewWillLayoutSubviews() {
         super.containerViewWillLayoutSubviews()
         backgroundView.frame = containerView?.bounds ?? .zero
-        updateState(context: .common)
+        updateState(context: .common, animated: false)
     }
     
     override func presentationTransitionWillBegin() {
@@ -77,11 +67,12 @@ final class ModalPresentationController: UIPresentationController {
     
     override func presentationTransitionDidEnd(_ completed: Bool) {
         super.presentationTransitionDidEnd(completed)
-        animationsEnabled = true
+        isActive = true
     }
     
     override func dismissalTransitionWillBegin() {
         super.dismissalTransitionWillBegin()
+        isActive = false
         
         guard let coordinator = presentingViewController.transitionCoordinator else { return }
         coordinator.animate { [weak backgroundView] _ in
@@ -115,7 +106,7 @@ extension ModalPresentationController: UIGestureRecognizerDelegate {
 
 extension ModalPresentationController: ModalHeightDelegate {
     func heightChanged() {
-        updateState(context: .normalHeightChange)
+        updateState(context: .common, animated: true)
     }
 }
 
@@ -128,12 +119,31 @@ private extension ModalPresentationController {
         panGestureRecognizer.velocity(in: containerView).y
     }
     
+    var scrollOffsets: [Int: CGFloat] {
+        .init(
+            uniqueKeysWithValues: activeScrollViewsStorage.scrollViews.map {
+                ($0.hashValue, $0.contentOffset.y)
+            }
+        )
+    }
+    
+    func getCurrentState() -> State? {
+        isActive
+            ? .init(
+                frame: presentedView?.frame ?? .zero,
+                backgroundAlpha: backgroundView.alpha,
+                unnecessaryTranslation: unnecessaryTranslation,
+                scrollOffsets: scrollOffsets
+            )
+            : nil
+    }
+    
     @objc func didPan() {
         switch panGestureRecognizer.state {
         case .began, .changed, .possible:
-            updateState(context: .common)
+            updateState(context: .common, animated: false)
         case .ended, .cancelled, .failed:
-            updateState(context: .draggingFinish)
+            updateState(context: .draggingFinish, animated: true)
             panGestureRecognizer.setTranslation(.zero, in: containerView)
         @unknown default:
             break
@@ -146,21 +156,38 @@ private extension ModalPresentationController {
         presentedViewController.dismiss(animated: true)
     }
     
-    func updateState(context: State.Input.Context) {
+    func updateState(context: State.Input.Context, animated: Bool) {
         let input = makeStateInput(context: context)
-        state = State.makeState(input: input)
-    }
-    
-    func stateUpdated() {
-        guard let state = state else {
+        let newState = State.makeState(input: input)
+        let oldState = getCurrentState()
+        
+        guard newState != oldState else { return }
+        
+        guard let newState = newState else {
             closeWindow()
             return
         }
         
-        unnecessaryTranslation = state.unnecessaryTranslation
-        updateScrollViewsOffsets(state: state)
-        guard state.animated, animationsEnabled else {
-            updateViews(state: state)
+        unnecessaryTranslation = newState.unnecessaryTranslation
+        updateScrollViewsOffsets(newState: newState, oldState: oldState)
+        updateViews(newState: newState, oldState: oldState, animated: animated)
+    }
+    
+    func updateViews(newState: State, oldState: State?, animated: Bool) {
+        let updateViews = { [weak self] in
+            self?.presentedView?.frame = newState.frame
+            self?.backgroundView.alpha = newState.backgroundAlpha
+        }
+        
+        print()
+        
+        guard
+            newState.frame != oldState?.frame
+                || newState.backgroundAlpha != oldState?.backgroundAlpha
+        else { return }
+        
+        guard animated, isActive else {
+            updateViews()
             return
         }
         
@@ -168,19 +195,14 @@ private extension ModalPresentationController {
             withDuration: 0.25,
             delay: .zero,
             options: [.allowUserInteraction, .curveEaseInOut],
-            animations: { [weak self] in
-                self?.updateViews(state: state)
-            }
+            animations: updateViews
         )
     }
     
-    func updateViews(state: State) {
-        presentedView?.frame = state.frame
-        backgroundView.alpha = state.backgroundAlpha
-    }
-    
-    func updateScrollViewsOffsets(state: State) {
-        state.scrollOffsetsChanges.forEach { item in
+    func updateScrollViewsOffsets(newState: State, oldState: State?) {
+        guard newState.scrollOffsets != oldState?.scrollOffsets else { return }
+        
+        newState.scrollOffsets.forEach { item in
             let scrollView = activeScrollViewsStorage
                 .scrollViews.first { $0.hashValue == item.key }
             scrollView?.contentOffset.y = item.value
@@ -200,11 +222,7 @@ private extension ModalPresentationController {
             translation: translation,
             normalHeight: height.value,
             velocity: velocity,
-            scrollOffsets: .init(
-                uniqueKeysWithValues: activeScrollViewsStorage.scrollViews.map {
-                    ($0.hashValue, $0.contentOffset.y)
-                }
-            ),
+            scrollOffsets: scrollOffsets,
             unnecessaryTranslation: unnecessaryTranslation,
             context: context
         )
